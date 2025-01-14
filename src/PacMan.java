@@ -1,10 +1,14 @@
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.util.HashSet;
 import javax.swing.*;
 
 
 
-public class PacMan extends JPanel{
+public class PacMan extends JPanel implements ActionListener, KeyListener {
     class Block {
         int x;
         int y;
@@ -12,10 +16,14 @@ public class PacMan extends JPanel{
         int height;
         Image image;
 
-        int startX;
-        int startY;
+        int startX; // start value of the pac man
+        int startY; // start y value of the pac man on the grid
 
-        Block(Image image, int x, int y, int width, int height) {
+        char direction = 'U';
+        int velocityX = 0;
+        int velocityY = 0;
+
+        Block(Image image, int x, int y, int width, int height) { // constructor class 
             this.image = image;
             this.x = x;
             this.y = y;
@@ -23,6 +31,27 @@ public class PacMan extends JPanel{
             this.height = height;
             this.startX = x;
             this.startY = y;
+        }
+
+        void updateDirection(char direction) {
+            this.direction = direction;
+            updateVelocity();
+        }
+
+        void updateVelocity() {
+            if (this.direction == 'U') {
+                this.velocityX = 0;
+                this.velocityY = -tileSize/4;
+            } else if (this.direction == 'D') {
+                this.velocityX = 0;
+                this.velocityY = tileSize/4;
+            } else if (this.direction == 'L') {
+                this.velocityX = -tileSize/4;
+                this.velocityY = 0;
+            } else if (this.direction == 'R') {
+                this.velocityX = tileSize/4;
+                this.velocityY = 0;
+            }
         }
     }
 
@@ -71,14 +100,18 @@ public class PacMan extends JPanel{
         "XXXXXXXXXXXXXXXXXXX" 
     };
 
-    HashSet<Block> walls;
-    HashSet<Block> foods;
+    HashSet<Block> walls; // initialize a walls HashMap to store walls using the class Blocks which holds the x and y 
+    HashSet<Block> foods; // initialize a foods Hashmap to store food using the class Blocks
     HashSet<Block> ghosts;
-    Block pacman;
+    Block pacman; // There is only one PacMan so one Block can be user to represent him
+
+    Timer gameLoop;
 
     PacMan() {
-        setPreferredSize(new Dimension(boardWidth, boardHeight));
-        setBackground(Color.BLACK);
+        setPreferredSize(new Dimension(boardWidth, boardHeight)); // sets the dimensions of the JPanel in JFrame
+        setBackground(Color.BLACK); // Sets the Background of the window in front of the image
+        addKeyListener(this);
+        setFocusable(true);
 
         //load images
         wallImage = new ImageIcon(getClass().getResource("./wall.png")).getImage();
@@ -94,7 +127,8 @@ public class PacMan extends JPanel{
         pacmanRightImage = new ImageIcon(getClass().getResource("./pacmanRight.png")).getImage();
 
         loadMap();
-        
+        gameLoop = new Timer(50, this);
+        gameLoop.start();
 
     }
 
@@ -111,7 +145,7 @@ public class PacMan extends JPanel{
                 int x = c*tileSize;
                 int y = r*tileSize;
 
-                if (tileMapChar == 'X') { // block wall
+                if (tileMapChar == 'X') {
                     Block wall = new Block(wallImage, x, y, tileSize, tileSize);
                     walls.add(wall);
                 } else if (tileMapChar == 'b') { // blue ghost
@@ -152,8 +186,44 @@ public class PacMan extends JPanel{
             g.drawImage(wall.image, wall.x, wall.y, wall.width, wall.height, null);
         }
 
+        g.setColor(Color.WHITE);
         for (Block food : foods) {
-            g.drawImage(food.image, food.x, food.y, food.width, food.height, null);
+            g.fillRect(food.x, food.y, food.width, food.height);
+        }
+    }
+
+    public void move() {
+        pacman.x += pacman.velocityX;
+        pacman.y += pacman.velocityY;
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        move();
+        repaint();
+        // throw new UnsupportedOperationException("Unimplemented method 'actionPerformed'");
+    }
+
+    @Override
+    public void keyTyped(KeyEvent e) {}
+
+    @Override
+    public void keyPressed(KeyEvent e) {}
+
+    @Override
+    public void keyReleased(KeyEvent e) {
+        // System.out.println("Key Event: " + e.getKeyCode());
+        if (e.getKeyCode() == KeyEvent.VK_UP) {
+            pacman.updateDirection('U');
+        }
+        if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+            pacman.updateDirection('D');
+        }
+        if (e.getKeyCode() == KeyEvent.VK_LEFT) {
+            pacman.updateDirection('L');
+        }
+        if (e.getKeyCode() == KeyEvent.VK_RIGHT) {
+            pacman.updateDirection('R');
         }
     }
 }
